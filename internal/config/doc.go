@@ -1,26 +1,31 @@
-// Package config provides loading and validation of portwatch daemon
-// configuration files.
+// Package config provides configuration loading and validation for portwatch.
 //
-// Configuration is expressed as YAML. Unknown fields are rejected to catch
-// typos early. A call to Load merges the file over sensible defaults so that
-// minimal config files remain valid:
+// Configuration can be supplied via a TOML file. When no file is present the
+// package returns safe defaults so that portwatch is immediately usable without
+// any setup.
 //
-//	# Minimum valid configuration file
-//	interval: 60s
-//	snapshot_dir: /var/lib/portwatch
+// # File format
 //
-// The Default function returns the same baseline without reading any file,
-// which is useful for tests and for running portwatch without a config file.
+// A minimal configuration file looks like:
 //
-// Validation rules:
-//   - interval must be a positive duration (e.g. "30s", "5m")
-//   - snapshot_dir must be a non-empty path
-//   - Unknown top-level keys are rejected to surface typos early
+//	[portwatch]
+//	interval       = "30s"
+//	snapshot_path  = "/var/lib/portwatch/snapshot.json"
 //
-// Example usage:
+//	[alert.slack]
+//	webhook_url = "https://hooks.slack.com/services/…"
 //
-//	cfg, err := config.Load("/etc/portwatch/config.yaml")
-//	if err != nil {
-//		log.Fatal(err)
-//	}
+//	[alert.email]
+//	smtp_host   = "smtp.example.com"
+//	smtp_port   = 587
+//	recipients  = ["ops@example.com"]
+//
+//	[alert.webhook]
+//	url = "https://example.com/portwatch"
+//
+// # Alert handlers
+//
+// Each alert section is optional. Omitting a section disables that handler.
+// Multiple handlers can be active simultaneously; portwatch fans out every
+// alert to all registered handlers.
 package config
