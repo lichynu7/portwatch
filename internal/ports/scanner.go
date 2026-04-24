@@ -98,3 +98,14 @@ func parseHexPort(addrPort string) (int, error) {
 	}
 	return int(port), nil
 }
+
+// FilterByPort returns only the listeners matching the given port number.
+func FilterByPort(listeners []Listener, port int) []Listener {
+	var result []Listener
+	for _, l := range listeners {
+		if l.Port == port {
+			result = append(result, l)
+		}
+	}
+	return result
+}
