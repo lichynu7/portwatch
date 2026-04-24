@@ -53,6 +53,21 @@ func NewAlert(level Level, port uint16, protocol string, pid int, msg string) Al
 	}
 }
 
+// IsCritical reports whether the alert is at the CRITICAL severity level.
+func (a Alert) IsCritical() bool {
+	return a.Level == LevelCritical
+}
+
+// IsWarning reports whether the alert is at the WARNING severity level.
+func (a Alert) IsWarning() bool {
+	return a.Level == LevelWarning
+}
+
+// IsInfo reports whether the alert is at the INFO severity level.
+func (a Alert) IsInfo() bool {
+	return a.Level == LevelInfo
+}
+
 // StdoutNotifier writes alerts to standard output.
 type StdoutNotifier struct{}
 
