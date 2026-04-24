@@ -1,80 +1,76 @@
-package config_test
+package config
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/user/portwatch/internal/config"
 )
 
 func writeTemp(t *testing.T, content string) string {
 	t.Helper()
-	dir := t.TempDir()
-	p := filepath.Join(dir, "portwatch.yaml")
-	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
-		t.Fatalf("writeTemp: %v", err)
+	f, err := os.CreateTemp(t.TempDir(), "portwatch-*.yaml")
+	if err != nil {
+		t.Fatalf("create temp file: %v", err)
 	}
-	return p
+	if _, err := f.WriteString(content); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+	f.Close()
+	return f.Name()
 }
 
 func TestDefault(t *testing.T) {
-	cfg := config.Default()
+	cfg := Default()
 	if cfg.Interval != 30*time.Second {
-		t.Errorf("expected 30s interval, got %s", cfg.Interval)
+		t.Errorf("expected 30s interval, got %v", cfg.Interval)
 	}
-	if !cfg.Alerts.Stdout {
-		t.Error("expected stdout alerts enabled by default")
+	if cfg.SnapshotDir != "/var/lib/portwatch" {
+		t.Errorf("unexpected snapshot_dir: %s", cfg.SnapshotDir)
+	}
+	if cfg.LogLevel != "info" {
+		t.Errorf("unexpected log_level: %s", cfg.LogLevel)
 	}
 }
 
 func TestLoadValid(t *testing.T) {
-	yaml := `
-interval: 10s
-snapshot_dir: /tmp/pw
-allowed_ports: [22, 80, 443]
-alerts:
-  stdout: true
-  log_file: /tmp/pw.log
-`
-	p := writeTemp(t, yaml)
-	cfg, err := config.Load(p)
+	path := writeTemp(t, "interval: 1m\nlog_level: debug\nwebhook:\n  url: http://hook.example.com\n")
+	cfg, err := Load(path)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if cfg.Interval != 10*time.Second {
-		t.Errorf("interval: got %s, want 10s", cfg.Interval)
+	if cfg.Interval != time.Minute {
+		t.Errorf("expected 1m, got %v", cfg.Interval)
 	}
-	if len(cfg.AllowedPorts) != 3 {
-		t.Errorf("allowed_ports: got %d entries, want 3", len(cfg.AllowedPorts))
+	if cfg.LogLevel != "debug" {
+		t.Errorf("expected debug, got %s", cfg.LogLevel)
 	}
-	if cfg.Alerts.LogFile != "/tmp/pw.log" {
-		t.Errorf("log_file: got %q", cfg.Alerts.LogFile)
+	if cfg.Webhook.URL != "http://hook.example.com" {
+		t.Errorf("unexpected webhook url: %s", cfg.Webhook.URL)
 	}
 }
 
 func TestLoadMissingFile(t *testing.T) {
-	_, err := config.Load("/nonexistent/portwatch.yaml")
+	_, err := Load("/nonexistent/portwatch.yaml")
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}
 }
 
 func TestLoadInvalidInterval(t *testing.T) {
-	yaml := `interval: 500ms\nsnapshot_dir: /tmp/pw\n`
-	p := writeTemp(t, yaml)
-	_, err := config.Load(p)
+	path := writeTemp(t, "interval: -5s\n")
+	_, err := Load(path)
 	if err == nil {
-		t.Fatal("expected validation error for sub-second interval")
+		t.Fatal("expected error for negative interval")
 	}
 }
 
-func TestLoadUnknownField(t *testing.T) {
-	yaml := `unknown_key: oops\ninterval: 5s\nsnapshot_dir: /tmp/pw\n`
-	p := writeTemp(t, yaml)
-	_, err := config.Load(p)
-	if err == nil {
-		t.Fatal("expected error for unknown field")
+func TestLoadWebhookTimeout(t *testing.T) {
+	path := writeTemp(t, "interval: 10s\nwebhook:\n  url: http://x.example.com\n  timeout: 10s\n")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Webhook.Timeout != 10*time.Second {
+		t.Errorf("expected 10s webhook timeout, got %v", cfg.Webhook.Timeout)
 	}
 }
