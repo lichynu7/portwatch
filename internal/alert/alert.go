@@ -9,8 +9,8 @@ import (
 type Level string
 
 const (
-	LevelInfo    Level = "INFO"
-	LevelWarning Level = "WARNING"
+	LevelInfo     Level = "INFO"
+	LevelWarning  Level = "WARNING"
 	LevelCritical Level = "CRITICAL"
 )
 
@@ -22,6 +22,18 @@ type Alert struct {
 	PID       int
 	Message   string
 	Timestamp time.Time
+}
+
+// String returns a human-readable representation of the alert.
+func (a Alert) String() string {
+	return fmt.Sprintf("[%s] %s | port=%d proto=%s pid=%d msg=%q",
+		a.Timestamp.Format(time.RFC3339),
+		a.Level,
+		a.Port,
+		a.Protocol,
+		a.PID,
+		a.Message,
+	)
 }
 
 // Notifier is the interface implemented by alert output backends.
@@ -46,13 +58,6 @@ type StdoutNotifier struct{}
 
 // Notify prints the alert to stdout in a structured format.
 func (s *StdoutNotifier) Notify(a Alert) error {
-	fmt.Printf("[%s] %s | port=%d proto=%s pid=%d msg=%q\n",
-		a.Timestamp.Format(time.RFC3339),
-		a.Level,
-		a.Port,
-		a.Protocol,
-		a.PID,
-		a.Message,
-	)
+	fmt.Println(a.String())
 	return nil
 }
