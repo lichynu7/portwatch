@@ -74,3 +74,20 @@ func TestSlackHandlerNon2xxError(t *testing.T) {
 		t.Fatal("expected error for non-2xx status, got nil")
 	}
 }
+
+func TestSlackHandlerClosedServer(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	ts.Close() // close immediately so the request will fail
+
+	h, err := NewSlackHandler(ts.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	a := NewAlert(KindNew, ports.Port{Port: 443, Proto: "tcp", Addr: "0.0.0.0"})
+	if err := h.Send(a); err == nil {
+		t.Fatal("expected error when sending to closed server, got nil")
+	}
+}
