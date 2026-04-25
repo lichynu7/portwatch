@@ -54,3 +54,24 @@ func DefaultHandlers() HandlerConfig {
 		},
 	}
 }
+
+// EnabledHandlers returns the names of all handlers that are currently enabled.
+func (h HandlerConfig) EnabledHandlers() []string {
+	var enabled []string
+	if h.Log.Enabled {
+		enabled = append(enabled, "log")
+	}
+	if h.Email.Enabled {
+		enabled = append(enabled, "email")
+	}
+	if h.Webhook.Enabled {
+		enabled = append(enabled, "webhook")
+	}
+	if h.Slack.Enabled {
+		enabled = append(enabled, "slack")
+	}
+	if h.PagerDuty.Enabled {
+		enabled = append(enabled, "pagerduty")
+	}
+	return enabled
+}
