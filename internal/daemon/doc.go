@@ -10,4 +10,18 @@
 //  5. Persists the new snapshot for the next tick.
 //
 // The loop runs until the supplied context is cancelled.
+//
+// # Tick interval
+//
+// The interval between scans is controlled by Config.Interval. If the scan
+// or alert dispatch takes longer than the interval, the next tick begins
+// immediately without drift accumulation (i.e. the ticker is reset, not
+// queued).
+//
+// # Error handling
+//
+// Transient scan errors are logged and skipped; the snapshot is not updated
+// so that ports from the previous successful scan are retained for comparison
+// on the next tick. Persistent alert-dispatch errors are logged but do not
+// stop the loop.
 package daemon
