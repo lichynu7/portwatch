@@ -1,6 +1,9 @@
 package alert
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // Dispatcher fans out alerts to one or more registered Notifiers.
 type Dispatcher struct {
@@ -23,17 +26,23 @@ func (d *Dispatcher) Register(n Notifier) {
 }
 
 // Dispatch sends the alert to all registered notifiers.
-// It collects and returns the first non-nil error encountered,
+// It collects all errors encountered and returns a combined error,
 // but still attempts delivery to every notifier.
 func (d *Dispatcher) Dispatch(a Alert) error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	var firstErr error
+	var errs []error
 	for _, n := range d.notifiers {
-		if err := n.Notify(a); err != nil && firstErr == nil {
-			firstErr = err
+		if err := n.Notify(a); err != nil {
+			errs = append(errs, err)
 		}
 	}
-	return firstErr
+	if len(errs) == 0 {
+		return nil
+	}
+	if len(errs) == 1 {
+		return errs[0]
+	}
+	return fmt.Errorf("%d notifiers failed dispatching alert; first error: %w", len(errs), errs[0])
 }
