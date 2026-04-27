@@ -24,4 +24,11 @@
 // so that ports from the previous successful scan are retained for comparison
 // on the next tick. Persistent alert-dispatch errors are logged but do not
 // stop the loop.
+//
+// # Graceful shutdown
+//
+// When the context passed to Run is cancelled, the daemon finishes any
+// in-progress scan and alert dispatch before returning. Callers should
+// wait on the error returned by Run to ensure all resources are released
+// cleanly before the process exits.
 package daemon
