@@ -74,3 +74,11 @@ func TestLoadWebhookTimeout(t *testing.T) {
 		t.Errorf("expected 10s webhook timeout, got %v", cfg.Webhook.Timeout)
 	}
 }
+
+func TestLoadZeroInterval(t *testing.T) {
+	path := writeTemp(t, "interval: 0s\n")
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error for zero interval")
+	}
+}
