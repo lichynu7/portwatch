@@ -47,6 +47,13 @@ func TestDedupConfigValidateNegative(t *testing.T) {
 	}
 }
 
+func TestDedupConfigValidateZero(t *testing.T) {
+	cfg := DedupConfig{WindowSize: "0s"}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected error for zero duration")
+	}
+}
+
 func TestDedupConfigWindowDuration(t *testing.T) {
 	cfg := DedupConfig{WindowSize: "2m30s"}
 	d, err := cfg.WindowDuration()
