@@ -84,3 +84,11 @@ func TestLabelInitialisesNilMap(t *testing.T) {
 		t.Fatal("expected labels map to be initialised")
 	}
 }
+
+func TestLabelEmptyInput(t *testing.T) {
+	l, _ := NewLabeler(defaultLabelerCfg())
+	out := l.Label([]Port{})
+	if len(out) != 0 {
+		t.Errorf("expected empty output for empty input, got %d entries", len(out))
+	}
+}
