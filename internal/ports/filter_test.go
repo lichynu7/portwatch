@@ -45,6 +45,22 @@ func TestIsSafeNilConfig(t *testing.T) {
 	}
 }
 
+func TestIsSafeBothPortAndProcess(t *testing.T) {
+	fc := NewFilterConfig([]uint16{22}, []string{"nginx"})
+	// Safe by port match
+	if !fc.IsSafe(makePort(22, "unknown")) {
+		t.Error("port 22 should be safe by port match")
+	}
+	// Safe by process match
+	if !fc.IsSafe(makePort(9999, "nginx")) {
+		t.Error("nginx process should be safe by process match")
+	}
+	// Neither port nor process matches
+	if fc.IsSafe(makePort(9999, "unknown")) {
+		t.Error("unknown port and process should not be safe")
+	}
+}
+
 func TestExcludeSafe(t *testing.T) {
 	ports := []Port{
 		makePort(22, "sshd"),
