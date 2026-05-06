@@ -23,3 +23,20 @@ func ApplyBaseline(ports []Port, b *Baseline) []Port {
 	}
 	return out
 }
+
+// PartitionBaseline splits ports into two slices: known contains ports present
+// in the baseline, and unknown contains ports that are not. This is useful when
+// callers need to handle both groups separately rather than discarding known ports.
+func PartitionBaseline(ports []Port, b *Baseline) (known, unknown []Port) {
+	if b == nil {
+		return nil, ports
+	}
+	for _, p := range ports {
+		if b.Contains(p.Proto, p.Port) {
+			known = append(known, p)
+		} else {
+			unknown = append(unknown, p)
+		}
+	}
+	return known, unknown
+}
